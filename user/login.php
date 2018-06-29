@@ -1,0 +1,239 @@
+<?php
+	require('func/config.php');
+	if($user->is_logged_in()){
+
+		// if($_SESSION["Role"]=="1"){
+		// 	header('Location: index');
+		// }else if($_SESSION["Role"]=="2"){
+		// 	header('Location: dashboard');
+		// }
+  }
+ ?>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<meta charset="utf-8" />
+		<title>Login - Asset Manager</title>
+
+		<meta name="description" content="User login page" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+		<!-- bootstrap & fontawesome -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+
+		<!-- text fonts -->
+		<link rel="stylesheet" href="assets/css/fonts.googleapis.com.css" />
+
+		<!-- ace styles -->
+		<link rel="stylesheet" href="assets/css/ace.min.css" />
+
+		<!--[if lte IE 9]>
+			<link rel="stylesheet" href="assets/css/ace-part2.min.css" />
+		<![endif]-->
+		<link rel="stylesheet" href="assets/css/ace-rtl.min.css" />
+
+		<!--[if lte IE 9]>
+		  <link rel="stylesheet" href="assets/css/ace-ie.min.css" />
+		<![endif]-->
+
+		<!-- HTML5shiv and Respond.js for IE8 to support HTML5 elements and media queries -->
+
+		<!--[if lte IE 8]>
+		<script src="assets/js/html5shiv.min.js"></script>
+		<script src="assets/js/respond.min.js"></script>
+		<![endif]-->
+	</head>
+
+	<body class="login-layout login-layout light-login">
+		<div class="main-container">
+			<div class="main-content">
+				<div class="row">
+					<div class="col-sm-10 col-sm-offset-1">
+						<div class="login-container">
+							<div class="center">
+								<h1>
+									<i class="ace-icon fa fa-folder green"></i>
+									<span class="red">Asset</span>
+									<span class="grey" id="id-text2">Manager</span>
+								</h1>
+								<h4 class="blue" id="id-company-text">&copy; NIT Hamirpur </h4>
+							</div>
+
+							<div class="space-6"></div>
+
+							<div class="position-relative">
+								<div id="login-box" class="login-box visible widget-box no-border">
+									<div class="widget-body">
+										<div class="widget-main">
+											<h4 class="header blue lighter bigger">
+												<i class="ace-icon fa fa-coffee green"></i>
+												Please Enter Your Information
+											</h4>
+
+											<div class="space-6"></div>
+											<?php
+												//process login form if submitted
+					            	if(isset($_POST['submit'])){
+
+					            		$user_email = trim($_POST['user_email']);
+					            		$password = trim($_POST['password']);
+
+					            		if($user->login($user_email,$password))
+					                {
+					                  //check if account is activated
+					                  $stmt = $db->prepare('SELECT * FROM profilemaster WHERE Email = :user_email');
+					                  $stmt->execute(array(
+					                		':user_email' => $user_email
+					                	));
+					                  while($row=$stmt->fetch(PDO::FETCH_ASSOC))
+					    		          {
+					                    $status = $row['Status'];
+															$_SESSION["username"] = $row['Username'];
+															$_SESSION['usersfullname'] = $row['Name'];
+															$_SESSION["profilephoto"] = $row['Photo'];
+															$_SESSION["Role"] = $row['Role'];
+															$_SESSION["Id"] = $row['Id'];
+					                  }
+					                  if( $status=="Y")
+					                  {
+															if(!empty($_POST["remember"])) {
+																setcookie ("member_login",$_POST["user_email"],time()+ (10 * 365 * 24 * 60 * 60));
+																setcookie ("member_password",$_POST["password"],time()+ (10 * 365 * 24 * 60 * 60));
+															} else {
+																if(isset($_COOKIE["member_login"])) {
+																	setcookie ("member_login","");
+																}
+																if(isset($_COOKIE["member_password"])) {
+																	setcookie ("member_password","");
+																}
+															}
+					                    //logged in return to index page
+															// if($row['Role']=="1"){
+															// 	header('Location: index');
+						                  //   exit;
+															// }else if($row['Role']=="2") {
+															// 	header('Location: dashboard');
+						                  //   exit;
+															// }
+															header('Location: index');
+															exit;
+
+					                  }else if ( $status=="N") {
+					                    $user->logout();
+					                    $message = '
+					                      <div class="alert alert-danger">
+					                        Your account is not activated. Kindly visit your email address to activate it.
+					                      </div>
+					                    ';
+					                  }else if ( $status=="P") {
+					                    $user->logout();
+					                    $message = '
+					                      <div class="alert alert-danger">
+					                        Your account is not approved. Kindly be patient till the procces is complete. You will recieve an email with a confirmation
+					                      </div>
+					                    ';
+					                  }
+
+					            		} else {
+					            			$message = '
+					                  <div class="alert alert-danger">
+					                      Wrong username or password.
+					                  </div>
+					                  ';
+					            		}
+
+					            	}//end if submit
+
+					            	if(isset($message)){ echo $message; }
+				            	?>
+											<form action="" method="post">
+												<fieldset>
+													<label class="block clearfix">
+														<span class="block input-icon input-icon-right">
+															<input type="text" class="form-control" placeholder="Your email" name="user_email" value="<?php if(isset($_COOKIE["member_login"])) { echo $_COOKIE["member_login"]; } ?>" />
+															<i class="ace-icon fa fa-user"></i>
+														</span>
+													</label>
+
+													<label class="block clearfix">
+														<span class="block input-icon input-icon-right">
+															<input type="password" class="form-control" placeholder="Your password" name="password" value="<?php if(isset($_COOKIE["member_password"])) { echo $_COOKIE["member_password"]; } ?>" />
+															<i class="ace-icon fa fa-lock"></i>
+														</span>
+													</label>
+
+													<div class="space"></div>
+
+													<div class="clearfix">
+														<label class="inline">
+															<input type="checkbox" class="ace" name="remember" <?php if(isset($_COOKIE["member_password"])) { echo "checked = 'true'"; } ?>/>
+															<span class="lbl"> Remember Me</span>
+														</label>
+
+														<button type="submit" name="submit" class="width-35 pull-right btn btn-sm btn-primary">
+															<i class="ace-icon fa fa-key"></i>
+															<span class="bigger-110">Login</span>
+														</button>
+													</div>
+
+													<div class="space-4"></div>
+												</fieldset>
+											</form>
+
+
+										</div><!-- /.widget-main -->
+
+										<div class="toolbar clearfix">
+											<div>
+												<a href="forgot-password" class="forgot-password-link">
+													<i class="ace-icon fa fa-arrow-left"></i>
+													I forgot my password
+												</a>
+											</div>
+
+											<div>
+												<a href="register" class="user-signup-link">
+													I want to register
+													<i class="ace-icon fa fa-arrow-right"></i>
+												</a>
+											</div>
+										</div>
+									</div><!-- /.widget-body -->
+								</div><!-- /.login-box -->
+							</div><!-- /.position-relative -->
+						</div>
+					</div><!-- /.col -->
+				</div><!-- /.row -->
+			</div><!-- /.main-content -->
+		</div><!-- /.main-container -->
+
+		<!-- basic scripts -->
+
+		<!--[if !IE]> -->
+		<script src="assets/js/jquery-2.1.4.min.js"></script>
+
+		<!-- <![endif]-->
+
+		<!--[if IE]>
+<script src="assets/js/jquery-1.11.3.min.js"></script>
+<![endif]-->
+		<script type="text/javascript">
+			if('ontouchstart' in document.documentElement) document.write("<script src='assets/js/jquery.mobile.custom.min.js'>"+"<"+"/script>");
+		</script>
+
+		<!-- inline scripts related to this page -->
+		<script type="text/javascript">
+			jQuery(function($) {
+			 $(document).on('click', '.toolbar a[data-target]', function(e) {
+				e.preventDefault();
+				var target = $(this).data('target');
+				$('.widget-box.visible').removeClass('visible');//hide others
+				$(target).addClass('visible');//show target
+			 });
+			});
+
+		</script>
+	</body>
+</html>
